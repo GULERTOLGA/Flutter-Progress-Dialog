@@ -22,6 +22,8 @@ class ProgressDialog {
   // Can only be accessed with the constructor.
   late BuildContext _context;
 
+  late BuildContext _dialogContext;
+
   ProgressDialog({required context}) {
     this._context = context;
   }
@@ -36,7 +38,7 @@ class ProgressDialog {
   /// [close] Closes the progress dialog.
   void close() {
     if (_dialogIsOpen) {
-      Navigator.pop(_context);
+      Navigator.pop(_dialogContext);
       _dialogIsOpen = false;
     }
   }
@@ -117,116 +119,119 @@ class ProgressDialog {
       barrierDismissible: barrierDismissible,
       barrierColor: barrierColor,
       context: _context,
-      builder: (context) => WillPopScope(
-        child: AlertDialog(
-          backgroundColor: backgroundColor,
-          elevation: elevation,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(
-              Radius.circular(borderRadius),
+      builder: (context) {
+        _dialogContext = context;
+        return WillPopScope(
+          child: AlertDialog(
+            backgroundColor: backgroundColor,
+            elevation: elevation,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(
+                Radius.circular(borderRadius),
+              ),
             ),
-          ),
-          content: ValueListenableBuilder(
-            valueListenable: _progress,
-            builder: (BuildContext context, dynamic value, Widget? child) {
-              if (value == max) {
-                if (completed == null)
-                  close();
-                else {
-                  Future.delayed(Duration(milliseconds: completed.closedDelay),
-                      () {
+            content: ValueListenableBuilder(
+              valueListenable: _progress,
+              builder: (BuildContext context, dynamic value, Widget? child) {
+                if (value == max) {
+                  if (completed == null)
                     close();
-                  });
+                  else {
+                    Future.delayed(
+                        Duration(milliseconds: completed.closedDelay), () {
+                      close();
+                    });
+                  }
                 }
-              }
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      value == max && completed != null
-                          ? Image(
-                              width: 40,
-                              height: 40,
-                              image: completed.completedImage ??
-                                  AssetImage(
-                                    "assets/completed.png",
-                                    package: "sn_progress_dialog",
-                                  ),
-                            )
-                          : Container(
-                              width: 35.0,
-                              height: 35.0,
-                              child: progressType == ProgressType.normal
-                                  ? _normalProgress(
-                                      bgColor: progressBgColor,
-                                      valueColor: progressValueColor,
-                                    )
-                                  : value == 0
-                                      ? _normalProgress(
-                                          bgColor: progressBgColor,
-                                          valueColor: progressValueColor,
-                                        )
-                                      : _valueProgress(
-                                          valueColor: progressValueColor,
-                                          bgColor: progressBgColor,
-                                          value: (value / max) * 100,
-                                        ),
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        value == max && completed != null
+                            ? Image(
+                                width: 40,
+                                height: 40,
+                                image: completed.completedImage ??
+                                    AssetImage(
+                                      "assets/completed.png",
+                                      package: "sn_progress_dialog",
+                                    ),
+                              )
+                            : Container(
+                                width: 35.0,
+                                height: 35.0,
+                                child: progressType == ProgressType.normal
+                                    ? _normalProgress(
+                                        bgColor: progressBgColor,
+                                        valueColor: progressValueColor,
+                                      )
+                                    : value == 0
+                                        ? _normalProgress(
+                                            bgColor: progressBgColor,
+                                            valueColor: progressValueColor,
+                                          )
+                                        : _valueProgress(
+                                            valueColor: progressValueColor,
+                                            bgColor: progressBgColor,
+                                            value: (value / max) * 100,
+                                          ),
+                              ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              left: 15.0,
+                              top: 8.0,
+                              bottom: 8.0,
                             ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                            left: 15.0,
-                            top: 8.0,
-                            bottom: 8.0,
-                          ),
-                          child: Text(
-                            value == max && completed != null
-                                ? completed.completedMsg
-                                : _msg.value,
-                            textAlign: msgTextAlign,
-                            maxLines: msgMaxLines,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: msgFontSize,
-                              color: msgColor,
-                              fontWeight: FontWeight.bold,
+                            child: Text(
+                              value == max && completed != null
+                                  ? completed.completedMsg
+                                  : _msg.value,
+                              textAlign: msgTextAlign,
+                              maxLines: msgMaxLines,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: msgFontSize,
+                                color: msgColor,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  hideValue == false
-                      ? Align(
-                          child: Text(
-                            value <= 0 ? '' : '${_progress.value}/$max',
-                            style: TextStyle(
-                              fontSize: valueFontSize,
-                              color: valueColor,
-                              fontWeight: valueFontWeight,
-                              decoration: value == max
-                                  ? TextDecoration.lineThrough
-                                  : TextDecoration.none,
+                      ],
+                    ),
+                    hideValue == false
+                        ? Align(
+                            child: Text(
+                              value <= 0 ? '' : '${_progress.value}/$max',
+                              style: TextStyle(
+                                fontSize: valueFontSize,
+                                color: valueColor,
+                                fontWeight: valueFontWeight,
+                                decoration: value == max
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                              ),
                             ),
-                          ),
-                          alignment: valuePosition == ValuePosition.right
-                              ? Alignment.bottomRight
-                              : Alignment.bottomCenter,
-                        )
-                      : Container()
-                ],
-              );
-            },
+                            alignment: valuePosition == ValuePosition.right
+                                ? Alignment.bottomRight
+                                : Alignment.bottomCenter,
+                          )
+                        : Container()
+                  ],
+                );
+              },
+            ),
           ),
-        ),
-        onWillPop: (){
-          if(barrierDismissible){
-            _dialogIsOpen = false;
-          }
-          return Future.value(barrierDismissible);
-        },
-      ),
+          onWillPop: () {
+            if (barrierDismissible) {
+              _dialogIsOpen = false;
+            }
+            return Future.value(barrierDismissible);
+          },
+        );
+      },
     );
   }
 }
